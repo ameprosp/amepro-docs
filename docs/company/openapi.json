@@ -1,0 +1,259 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Example.com",
+    "termsOfService": "https://example.com/terms/",
+    "contact": {
+      "email": "contact@example.com",
+      "url": "http://example.com/contact"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "x-logo": {
+      "url": "https://apis.guru/openapi-template/logo.png"
+    },
+    "description": "This is an **example** API to demonstrate features of OpenAPI specification\n# Introduction\nThis specification is intended to to be a good starting point for describing your API in \n[OpenAPI/Swagger format](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md).\nIt also demonstrates features of [generator-openapi-repo](https://github.com/Rebilly/generator-openapi-repo) tool and \n[ReDoc](https://github.com/Rebilly/ReDoc) documentation engine. So beyond the standard OpenAPI syntax we use a few \n[vendor extensions](https://github.com/Rebilly/ReDoc/blob/master/docs/redoc-vendor-extensions.md).\n\n# OpenAPI Specification\nThe goal of The OpenAPI Specification is to define a standard, language-agnostic interface to REST APIs which\nallows both humans and computers to discover and understand the capabilities of the service without access to source\ncode, documentation, or through network traffic inspection. When properly defined via OpenAPI, a consumer can \nunderstand and interact with the remote service with a minimal amount of implementation logic. Similar to what\ninterfaces have done for lower-level programming, OpenAPI removes the guesswork in calling the service.\n"
+  },
+  "externalDocs": {
+    "description": "Find out how to create Github repo for your OpenAPI spec.",
+    "url": "https://github.com/Rebilly/generator-openapi-repo"
+  },
+  "servers": [
+    {
+      "url": "http://example.com/api/v1"
+    },
+    {
+      "url": "https://example.com/api/v1"
+    }
+  ],
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "summary": "Login no company",
+        "tags": [
+          "USUÁRIO LOGADO"
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Content-type",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "application/json"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-HP-email",
+            "schema": {
+              "type": "string"
+            },
+            "description": "A informação deste campo só será utilizada caso o json da requisição contenha o provider 'locaHP'. Leia a seção 'Requested body' para mais informações."
+          },
+          {
+            "in": "header",
+            "name": "X-HP-password",
+            "schema": {
+              "type": "string"
+            },
+            "description": "A informação deste campo só será utilizada caso o json da requisição contenha o provider 'locaHP'. Leia a seção 'Requested body' para mais informações."
+          }
+        ],
+        "requestBody": {
+          "description": "Os **dados para acesso** ao backoffice são, **email:** backoffice@amestore.com e **senha:** 123456<br><br> A requisição de login é realizada enviando os dados em **json** ou no **header** <br><br>- **Json** -  deverá ser enviado conforme o schema abaixo.<br><br>- **Header** - deverá ser enviado o json contendo somente o campo provider com o valor \"localHP\" e no header os parametros X-HP-email e X-HP-password (Veja a seção parâmetros).<br><br>",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "backoffice@amestore.com"
+                  },
+                  "provider": {
+                    "type": "string",
+                    "example": "local"
+                  },
+                  "providerData": {
+                    "type": "object",
+                    "properties": {
+                      "password": {
+                        "type": "integer",
+                        "example": 123456
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "O sistema retornará um token que será utilizado para identificar o usuário ao realizar as operações no sistema. O token é composto por: userSessionRID - accountUserRid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseAuthLoginSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado, acesso negado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseAuthLoginBasicError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BasicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    },
+    "schemas": {
+      "basicResponse": {
+        "description": "Objeto genérico de resposta",
+        "type": "object",
+        "required": [
+          "uuid",
+          "code",
+          "data",
+          "timestamp",
+          "elapsed"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "example": "6ab9569e-04c0-4e58-8aa2-33df0e8ecbd6"
+          },
+          "code": {
+            "type": "integer",
+            "example": 200
+          },
+          "data": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "integer",
+            "example": 1559572937277
+          },
+          "elapsed": {
+            "type": "integer",
+            "example": 241
+          }
+        }
+      },
+      "basicError": {
+        "description": "Objeto genérico de erro",
+        "type": "object",
+        "required": [
+          "uuid",
+          "code",
+          "status",
+          "tag",
+          "type",
+          "error",
+          "message",
+          "timestamp",
+          "elapsed"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "example": "ba9f534d-47ba-4531-82be-83395261b490"
+          },
+          "code": {
+            "type": "integer",
+            "example": 401
+          },
+          "status": {
+            "type": "string",
+            "example": "Unauthorized"
+          },
+          "tag": {
+            "type": "string",
+            "example": "Auth"
+          },
+          "type": {
+            "type": "string",
+            "example": "AuthException"
+          },
+          "error": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "integer",
+            "example": 1559569821374
+          },
+          "elapsed": {
+            "type": "integer",
+            "example": 69
+          }
+        }
+      },
+      "responseAuthLoginBasicError": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/basicError"
+          },
+          {
+            "description": "Não autorizado",
+            "required": [
+              "error"
+            ],
+            "properties": {
+              "error": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "example": "provider data don't match"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "responseAuthLoginSchema": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/basicResponse"
+          },
+          {
+            "description": "Usuario logado com sucesso! O sistema retornará um token, que é composto por",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "example": "0F900F260000000000000000USSE0000016B1DCA7962821F-40FC33710000000000000000ACUS0000016AC6CD6C978001"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

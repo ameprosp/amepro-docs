@@ -1,0 +1,283 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Amepro backoffice
+  x-logo:
+    url: 'https://i2.wp.com/mongagua.sp.gov.br/wp-content/uploads/2015/08/AMERICANAS.jpg'
+  description: |
+    <h1>O que é o Amepro?</h1>
+    É uma API que viabiliza a gestão dos pedidos realizados no marketplace da B2W e a gestao estrategica do negócio por meio de informações  e gráficos, controle de estoque e de produtos e, controle de usuarios.
+
+    <h1>O que é a Amepro backoffice?</h1>
+    É uma collection de rotas para realizar a parte administrativa da collection Amepro company.
+
+     <h1>O que é Seller?</h1> 
+     É a empresa ou vendedor autonomo que realiza vendas pelo marketplace da B2W.
+     
+    <img src="http://www.newerp.com.br/img/img-gestao-pdvs.png"> 
+tags:
+  - name: Usuário Logado
+    description: O usuário necessita estar logado no sistema para rodas as rotas deste grupo
+servers:
+  - url: 'http://example.com/api/v1'
+  - url: 'https://example.com/api/v1'
+paths:
+  /api/auth/login:
+    post:
+      summary: Login no company
+      tags:
+        - Usuário Logado
+      parameters:
+        - in: header
+          name: Content-type
+          required: true
+          schema:
+            type: string
+            example: application/json
+        - in: header
+          name: X-HP-email
+          schema:
+            type: string
+          description: A informação deste campo só será utilizada caso o json da requisição contenha o provider 'locaHP'. Leia a seção 'Requested body' para mais informações.
+        - in: header
+          name: X-HP-password
+          schema:
+            type: string
+          description: A informação deste campo só será utilizada caso o json da requisição contenha o provider 'locaHP'. Leia a seção 'Requested body' para mais informações.
+      requestBody:
+        description: 'Os **dados para acesso** ao backoffice são, **email:** backoffice@amestore.com e **senha:** 123456<br><br> A requisição de login é realizada enviando os dados em **json** ou no **header** <br><br>- **Json** -  deverá ser enviado conforme o schema abaixo.<br><br>- **Header** - deverá ser enviado o json contendo somente o campo provider com o valor "localHP" e no header os parametros X-HP-email e X-HP-password (Veja a seção parâmetros).<br><br>'
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: backoffice@amestore.com
+                provider:
+                  type: string
+                  example: local
+                providerData:
+                  type: object
+                  properties:
+                    password:
+                      type: integer
+                      example: 123456
+      responses:
+        '200':
+          description: 'O sistema retornará um token que será utilizado para identificar o usuário ao realizar as operações no sistema. O token é composto por: userSessionRID - accountUserRid'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseAuthLoginSchema'
+        '401':
+          description: 'Não autorizado, acesso negado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseAuthLoginBasicError'
+  '/api/user-session/{userSessionRid}':
+    get:
+      summary: Obtém o accountUserRID do usuário
+      tags:
+        - Usuário Logado
+      description: '**RID** é um número que é composto por:<br>  1. **rnd** - random do tipo inteiro<br>  2. **tenant** - numeral do tipo long<br>  3. **typealias** - um identicador do tipo string<br> 4. **salt** - um numeral do tipo int.'
+      parameters:
+        - in: path
+          name: userSessionRid
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: The user ID
+      responses:
+        '200':
+          description: retorna o accontUserRid do usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseuser-session200'
+  /api/user/self:
+    get:
+      summary: Obtém informações do usuário logado
+      tags:
+        - Usuário Logado
+      description: ''
+      parameters:
+        - in: path
+          name: userSessionRid
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: The user ID
+      responses:
+        '200':
+          description: retornar as informações do usuário logado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userSelf200'
+components:
+  schemas:
+    basicResponse:
+      description: Objeto genérico de resposta
+      type: object
+      required:
+        - uuid
+        - code
+        - timestamp
+        - elapsed
+      properties:
+        uuid:
+          type: string
+          example: 6ab9569e-04c0-4e58-8aa2-33df0e8ecbd6
+        code:
+          type: integer
+          example: 200
+        timestamp:
+          type: integer
+          example: 1559572937277
+        elapsed:
+          type: integer
+          example: 241
+    basicError:
+      description: Objeto genérico de erro
+      type: object
+      required:
+        - uuid
+        - code
+        - status
+        - tag
+        - type
+        - error
+        - message
+        - timestamp
+        - elapsed
+      properties:
+        uuid:
+          type: string
+          example: ba9f534d-47ba-4531-82be-83395261b490
+        code:
+          type: integer
+          example: 401
+        status:
+          type: string
+          example: Unauthorized
+        tag:
+          type: string
+          example: Auth
+        type:
+          type: string
+          example: AuthException
+        error:
+          type: object
+        timestamp:
+          type: integer
+          example: 1559569821374
+        elapsed:
+          type: integer
+          example: 69
+    responseAuthLoginBasicError:
+      allOf:
+        - $ref: '#/components/schemas/basicError'
+        - description: Não autorizado
+          required:
+            - error
+          properties:
+            error:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: provider data don't match
+    responseAuthLoginSchema:
+      allOf:
+        - $ref: '#/components/schemas/basicResponse'
+        - description: 'Usuario logado com sucesso! O sistema retornará um token, que é composto por'
+          required:
+            - data
+          properties:
+            data:
+              type: object
+              properties:
+                token:
+                  type: string
+                  example: 0F900F260000000000000000USSE0000016B1DCA7962821F-40FC33710000000000000000ACUS0000016AC6CD6C978001
+    responseuser-session200:
+      allOf:
+        - $ref: '#/components/schemas/basicResponse'
+        - description: retorna o accontUserRid do usuário
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  accountName:
+                    type: string
+                    example: ''
+                  accountType:
+                    type: string
+                    example: BACKOFFICE
+                  accountUserRole:
+                    type: string
+                    example: ADMIN
+                  createdAt:
+                    type: integer
+                    example: 1558113512599
+                  email:
+                    type: string
+                    example: backoffice@amestore.com
+                  name:
+                    type: string
+                    example: BACKOFFICE
+                  notifiable:
+                    type: boolean
+                    example: false
+                  rid:
+                    type: string
+                    example: 40FC33710000000000000000ACUS0000016AC6CD6C978001
+                  updateAt:
+                    type: integer
+                    example: 1558113512599
+    userSelf200:
+      allOf:
+        - $ref: '#/components/schemas/basicResponse'
+        - description: retorna o accontUserRid do usuário
+          required:
+            - data
+          properties:
+            data:
+              type: object
+              properties:
+                accountName:
+                  type: string
+                  example: ''
+                accountType:
+                  type: string
+                  example: BACKOFFICE
+                accountUserRole:
+                  type: string
+                  example: ADMIN
+                createdAt:
+                  type: integer
+                  example: 1558113512599
+                email:
+                  type: string
+                  example: backoffice@amestore.com
+                name:
+                  type: string
+                  example: BACKOFFICE
+                notifiable:
+                  type: boolean
+                  example: false
+                rid:
+                  type: string
+                  example: 40FC33710000000000000000ACUS0000016AC6CD6C978001
+                updateAt:
+                  type: integer
+                  example: 1558113512599

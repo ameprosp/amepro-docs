@@ -1,0 +1,389 @@
+openapi: 3.0.0
+info:
+  title: Amepro Backoffice
+  version: 1.0.0
+  contact:
+    url: 'http://amepro.com'
+    email: 'amepro@b2wdigital.com'
+  x-logo:
+    url: 'http://icons.iconarchive.com/icons/jonas-rask/ekisho-deep-ocean/128/Ekisho-Deep-Ocean-Developer-icon.png'
+    altText: "Amestore Pro"
+  description: |
+    O **Amepro** é um sistema que viabiliza a gestão dos pedidos realizados no marketplace da B2W e a gestão do negócio por meio de  controles de estoque, informações gerênciais  e gráficos.
+    
+    O **Amepro BACKOFFICE** é uma collection com rotas para realizar o controle de usuários, criar companies, realizar migrações e rodar testes no sistema Amepro.'|
+tags:
+  - name: MIGRAÇÃO DE DADOS
+    description: 'É necessário inserir ''**IMPORTING_MODE=TRUE**'' nas variáveis de ambiente do servidor para rodar as rotas deste grupo e executar o sistema em modo **DEBUG**.'
+  - name: MODO TESTE
+    description: 'É necessário inserir ''**TEST_MODE=TRUE**'' nas variáveis de ambiente do servidor para rodar as rotas deste grupo e executar o sistema em modo **DEBUG**.'
+  - name: USUÁRIO LOGADO
+    description: 'É necessário inserir ''**TEST_MODE=TRUE**'' nas variáveis de ambiente do servidor, executar o sistema em modo **DEBUG** e estar logado no backoffice para rodar as rotas deste grupo.'
+servers:
+  - url: 'http://localhost:8085'
+    description: Homologação
+security:
+  - bearerAuth: [] 
+x-tagGroups:
+  - name: Glossário
+    tags:
+      - Coneitos do sistema
+      - Partitions
+      - API keys
+      - Admin
+  - name: Statistics
+    tags:
+      - Main Stats
+      - Secondary Stats
+paths:
+  /internal/script/run-tests:
+    post:
+      summary: Realizar testes  de integração no Amepro
+      description: Esta rota possibilita que o sistema 'bata' em cada rota e verifique se o tipo de retorno é igual ao esperado.
+      tags:
+        - MODO TESTE
+      responses:
+        '200':
+          description: Testes realizados com sucesso
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/basicResponse'
+                  - description: Testes realizados com sucesso!
+                    required:
+                      - data
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          logInformation:
+                            type: string
+                            example: 'You can see more information in: /tmp/run-test-script.log'
+                          companyInformations:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                tid:
+                                  type: string
+                                  example: 000000000098977CCOPN0000016B23FFA81F8000
+                                token: 
+                                  type: string
+                                  example: 3713F0900000000000000000USSE0000016B23FFC0CC8233-BA77D563000000000098977CACUS0000016B23FFB8CE8002
+                                integrationToken:
+                                  type: string
+                                  example: AMESTORETESTCOMPANY_1559677084896_1
+        '422':
+          description: Testes finalizados sem sucesso!
+          content:
+            application/json:
+              schema:
+                properties:
+                  uuid:
+                    type: string
+                    example: 6884dd65-6368-4409-8a32-e6e97a7f90fe
+                  code:
+                    type: integer
+                    example: 422
+                  tag:
+                    type: string
+                    example: Company Exception
+                  type:
+                    type: string
+                    example: ApiTestExpectException
+                  message:
+                    type: string
+                    example: java.lang.String cannot be cast to java.lang.Number
+                  description:
+                    type: array
+                    items:
+                      type: string
+                      example: '** stack trace [OMMITED] **'
+                  meta:
+                    type: object
+                    properties:
+                      companyToken:
+                        type: string
+                        example: 9CC604420000000000000000USSE0000016B241E202D8235-187581D1000000000098977DACUS0000016B241E18448002
+  /api/auth/login:
+    post:
+      summary: Logar no backoffice
+      description: 'Esta rota possibilita realizar o login no backoffice.<br><br>Os dados para realizar login no backoffice são: <br> **email:** backoffice@amestore.com<br> **senha:** 123456<br><br>As informações de acesso podem ser enviadas no **header** ou no **body** da requisição.'
+      tags: 
+        - MODO TESTE
+      parameters:
+        - $ref: '#/components/parameters/contentType'
+        - in: header
+          name: X-HP-email
+          schema:
+            type: string
+          description: A informação deste campo só será utilizada caso o json da requisição contenha o provider 'locaHP'. Leia a seção 'Requested body' para mais informações.
+        - in: header
+          name: X-HP-password
+          schema:
+            type: string
+          description: A informação deste campo só será utilizada caso o json da requisição contenha o provider 'locaHP'. Leia a seção 'Requested body' para mais informações.
+      requestBody:
+        description: 'Para enviar as informações de acesso no header, no body da requisição preencha o json conforme o payload de exemplo ''Login by Header''. Para enviar as informações de login no body, no body da requisição preencha o json conforme o payload de exemplo ''Login by Body'''
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            examples:   
+              Login By Header:     
+                value:
+                  provider: 'localHP'
+              Login By Body:  
+                value:
+                  email: 'backoffice@amestore.com'
+                  provider: 'local'
+                  providerData: 
+                    password: '123456'
+      responses:
+        '200':
+          description: 'O sistema retornará um token que será utilizado para identificar o usuário ao realizar as operações no sistema. O token é composto por: userSessionRID - accountUserRid'
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/basicResponse'
+                  - description: Usuário logado com sucesso!
+                    required:
+                      - data
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          token:
+                            type: string
+                            example: '0F900F260000000000000000USSE0000016B1DCA7962821F-40FC33710000000000000000ACUS0000016AC6CD6C978001'
+        '401':
+          description: Não autorizado, acesso negado.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/basicError'
+                  - description: Não autorizado
+                    required:
+                      - error
+                    properties:
+                      error:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: "provider data don't match"
+  /api/user-session/{userSessionRid}:
+    get:
+      summary: Obtém o accountUserRID do usuário
+      tags: 
+        - USUÁRIO LOGADO
+      description: '**RID** é um número que é composto por:<br>  1. **rnd** - random do tipo inteiro<br>  2. **tenant** - numeral do tipo long<br>  3. **typealias** - um identicador do tipo string<br> 4. **salt** - um numeral do tipo int.' 
+      parameters:
+      - in: path
+        name: userSessionRid
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+        description: The user ID
+      responses:
+        '200':
+          description: retorna o accontUserRid do usuário
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/basicResponse'
+                  - description: retorna o accontUserRid do usuário
+                    required:
+                      - data
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            accountName:
+                              type: string
+                              example: ""
+                            accountType:
+                              type: string
+                              example: BACKOFFICE
+                            accountUserRole:
+                              type: string
+                              example: ADMIN
+                            createdAt:
+                              type: integer
+                              example: 1558113512599
+                            email:
+                              type: string
+                              example: backoffice@amestore.com
+                            name:
+                              type: string
+                              example: BACKOFFICE
+                            notifiable:
+                              type: boolean
+                              example: false
+                            rid:
+                              type: string
+                              example: 40FC33710000000000000000ACUS0000016AC6CD6C978001
+                            updateAt: 
+                              type: integer
+                              example: 1558113512599
+  /api/user/self:
+    get:
+      summary: Obtém informações do usuário logado
+      tags: 
+        - USUÁRIO LOGADO
+      description: '' 
+      parameters:
+      - in: path
+        name: userSessionRid
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+        description: The user ID
+      responses:
+        '200':
+          description: retornar as informações do usuário logado.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/basicResponse'
+                  - description: retorna o accontUserRid do usuário
+                    required:
+                      - data
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          accountName:
+                            type: string
+                            example: ""
+                          accountType:
+                            type: string
+                            example: BACKOFFICE
+                          accountUserRole:
+                            type: string
+                            example: ADMIN
+                          createdAt:
+                            type: integer
+                            example: 1558113512599
+                          email:
+                            type: string
+                            example: backoffice@amestore.com
+                          name:
+                            type: string
+                            example: BACKOFFICE
+                          notifiable:
+                            type: boolean
+                            example: false
+                          rid:
+                            type: string
+                            example: 40FC33710000000000000000ACUS0000016AC6CD6C978001
+                          updateAt: 
+                            type: integer
+                            example: 1558113512599
+  /internal/script/run-estoka-importing:
+    post:
+      summary: Migração de dados
+      description: Esta rota possibilita realizar a migração de dados dos sistema estoka para a base de dados do Amepro.
+      tags:
+        - MIGRAÇÃO DE DADOS
+      responses:
+        '200':
+          description: Migração de dados realizada com sucesso
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/basicResponse'
+                  - description: dados para acesso ao sistema, com os dados da migração.
+                    properties:
+                      data:
+                        type: string
+                        example: '#######OPERATOR: amestore@amestore.com.br | 123456'
+                        
+components:
+  securitySchemes:
+    Autenticação:            
+      type: http
+      scheme: bearer
+      bearerFormat: userSessionRID - accountUserRid
+  parameters:
+    contentType: 
+      in: header
+      name: Content-type
+      required: true
+      schema:
+        type: string
+        example: application/json
+      description: Parâmetro necessário para informar que a informação enviada na requisição está no formato JSON.
+  schemas:
+    basicResponse:
+      description: Objeto genérico de resposta
+      type: object
+      required: 
+        - uuid
+        - code
+        - data
+        - timestamp
+        - elapsed
+      properties:
+        uuid:
+          type: string
+          example: 6ab9569e-04c0-4e58-8aa2-33df0e8ecbd6
+        code:
+          type: integer
+          example: 200
+        data:
+          example: '.'
+        timestamp: 
+          type: integer
+          example: 1559572937277
+        elapsed:
+          type: integer
+          example: 241
+    basicError:
+      description: Objeto genérico de erro
+      type: object
+      required:
+        - uuid
+        - code
+        - status
+        - tag
+        - type
+        - error
+        - message
+        - timestamp
+        - elapsed
+      properties:
+        uuid:
+          type: string
+          example: ba9f534d-47ba-4531-82be-83395261b490
+        code:
+          type: integer
+          example: 401
+        status:
+          type: string
+          example: Unauthorized
+        tag:
+          type: string
+          example: Auth
+        type:
+          type: string
+          example: AuthException
+        error:
+          type: object
+        timestamp:
+          type: integer
+          example: 1559569821374
+        elapsed:
+          type: integer
+          example: 69
